@@ -34,7 +34,6 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.reactive.function.BodyInserters;
-import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilterChain;
 import org.springframework.web.server.WebSession;
 
@@ -64,7 +63,7 @@ public class CsrfWebFilterTests {
 
 	private MockServerWebExchange get = MockServerWebExchange.from(MockServerHttpRequest.get("/"));
 
-	private ServerWebExchange post = MockServerWebExchange.from(MockServerHttpRequest.post("/"));
+	private MockServerWebExchange post = MockServerWebExchange.from(MockServerHttpRequest.post("/"));
 
 	@Test
 	public void filterWhenGetThenSessionNotCreatedAndChainContinues() {
@@ -91,6 +90,8 @@ public class CsrfWebFilterTests {
 		Mono<Void> result = this.csrfFilter.filter(this.post, this.chain);
 		StepVerifier.create(result).verifyComplete();
 		assertThat(this.post.getResponse().getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+		StepVerifier.create(this.post.getResponse().getBodyAsString())
+				.assertNext((body) -> assertThat(body).contains("An expected CSRF token cannot be found"));
 	}
 
 	@Test
